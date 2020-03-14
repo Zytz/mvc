@@ -12,8 +12,8 @@ import java.lang.annotation.Target;
  * @description:
  */
 @Documented
-@Target({ElementType.TYPE,ElementType.METHOD})
+@Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface JohnAutowire {
+public @interface JohnAutowired {
     String value() default "";
 }

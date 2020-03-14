@@ -6,6 +6,15 @@
   <display-name>Archetype Created Web Application</display-name>
   <servlet>
     <servlet-name>johnmvc</servlet-name>
-    <servlet-class>com.john,</servlet-class>
+    <servlet-class>com.john.mvcframework.servlet.JohnDispatchServlet</servlet-class>
+    <init-param>
+      <param-name>configContextLocation</param-name>
+      <param-value>springmvc.properties</param-value>
+    </init-param>
   </servlet>
+  <servlet-mapping>
+    <servlet-name>johnmvc</servlet-name>
+    <url-pattern>/</url-pattern>
+  </servlet-mapping>
+
 </web-app>
