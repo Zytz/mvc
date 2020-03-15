@@ -1,6 +1,9 @@
 package com.john.mvcframework.pojo;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -19,13 +22,14 @@ public class Handler {
 
     private Map<String,Integer> paramIndexMapping;//参数顺序，string为可以，后面是参数顺序
 
-    private Map<String,String> securityIndexMapping;//参数顺序，string为可以，后面是参数顺序
+    private List<String> securityRightName;//参数顺序，string为可以，后面是参数顺序
 
     public Handler(Object controller, Method method, Pattern pattern) {
         this.controller = controller;
         this.method = method;
         this.pattern = pattern;
-//        this.paramIndexMapping = paramIndexMapping;
+        this.paramIndexMapping = new HashMap<>();
+       this.securityRightName  = new ArrayList<String>();
     }
 
     public Object getController() {
@@ -60,11 +64,12 @@ public class Handler {
         this.paramIndexMapping = paramIndexMapping;
     }
 
-    public Map<String, String> getSecurityIndexMapping() {
-        return securityIndexMapping;
+
+    public List<String> getSecurityRightName() {
+        return securityRightName;
     }
 
-    public void setSecurityIndexMapping(Map<String, String> securityIndexMapping) {
-        this.securityIndexMapping = securityIndexMapping;
+    public void setSecurityRightName(List<String> securityRightName) {
+        this.securityRightName = securityRightName;
     }
 }

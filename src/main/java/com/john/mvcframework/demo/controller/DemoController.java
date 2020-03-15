@@ -9,6 +9,8 @@ import com.john.mvcframework.demo.service.impl.ServiceImpl;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import java.io.IOException;
+
 /**
  * @author:wenwei
  * @date:2020/03/09
@@ -27,10 +29,11 @@ public class DemoController {
         System.out.println("/demo/query");
         return service.query(name);
     }
-    @JohnRequestMapping("/query")
-    @JohnSercurity("wenwei")
-    public String queryWithToken(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,String name ) {
-        System.out.println("/demo/query");
-        return service.query(name);
+    @JohnRequestMapping("/handle01")
+    @JohnSercurity({"zhangsan","john"})
+    public String queryWithToken(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,String username ) throws IOException {
+//        System.out.println("/demo/handle");
+//        httpServletResponse.getWriter().println(username+"have the right");
+        return service.query(username);
     }
 }

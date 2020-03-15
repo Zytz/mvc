@@ -12,7 +12,7 @@ import com.john.mvcframework.demo.service.IService;
 public class ServiceImpl implements IService {
     @Override
     public String  query(String name) {
-        System.out.println("query:name");
+        System.out.println("you have the query right: "+name);
         return name;
     }
 }

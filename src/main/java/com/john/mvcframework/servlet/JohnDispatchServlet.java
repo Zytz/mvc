@@ -22,9 +22,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -95,30 +97,29 @@ public class JohnDispatchServlet extends HttpServlet {
                 }
 
 
-
                 JohnRequestMapping annotation = method.getAnnotation(JohnRequestMapping.class);
-                String value = annotation.value();
-                baseUrl += value;
+                String methodUrlvalue = annotation.value();
+                String url = baseUrl + methodUrlvalue;
 
                 //把method相关信息封装成handele
-                Handler handler = new Handler(entry.getValue(), method, Pattern.compile(baseUrl));
+                Handler handler = new Handler(entry.getValue(), method, Pattern.compile(url));
 
                 Parameter[] parameters = method.getParameters();
                 for (int i1 = 0; i1 < parameters.length; i1++) {
-                    if (parameters[i].getType() == HttpServletResponse.class || parameters[i].getType().equals(HttpServletRequest.class)) {
-                        handler.getParamIndexMapping().put(parameters[i].getType().getSimpleName(), i);
+                    if (parameters[i1].getType() == HttpServletResponse.class || parameters[i1].getType().equals(HttpServletRequest.class)) {
+                        handler.getParamIndexMapping().put(parameters[i1].getType().getSimpleName(), i1);
                     } else {
-                        handler.getParamIndexMapping().put(parameters[i].getName(), i);
+                        handler.getParamIndexMapping().put(parameters[i1].getName(), i1);
                     }
                     //处理security的参数
 
                     //处理security
-                    if(method.isAnnotationPresent(JohnSercurity.class)){
-                        JohnSercurity sucurityAnnotion= method.getAnnotation(JohnSercurity.class);
-                        String name = sucurityAnnotion.value();
-                        if(parameters[i].getName().equals("userName")){
+                    if (method.isAnnotationPresent(JohnSercurity.class)) {
+                        JohnSercurity sucurityAnnotion = method.getAnnotation(JohnSercurity.class);
+                        String[] names = sucurityAnnotion.value();
+                        if (parameters[i1].getName().equalsIgnoreCase("userName")) {
 
-                            handler.getSecurityIndexMapping().put(parameters[i].getName(),name);
+                            handler.setSecurityRightName(Arrays.asList(names));
                         }
                     }
                 }
@@ -207,7 +208,7 @@ public class JohnDispatchServlet extends HttpServlet {
                     //service 往往是有接口的，面向接口的开发；此时放入一份对象到IOC容器当中;便于后期跟接口类型注入
                     Class<?>[] interfaces = aClass.getInterfaces();
                     for (int i1 = 0; i1 < interfaces.length; i1++) {
-                        Class<?> anInterface = interfaces[i];
+                        Class<?> anInterface = interfaces[i1];
                         //以接口的全限定类名作为ID放入
                         iocMap.put(anInterface.getName(), aClass.newInstance());
                     }
@@ -243,8 +244,8 @@ public class JohnDispatchServlet extends HttpServlet {
             }
             if (scanfile.isDirectory()) {
                 doScan(packagePath + "." + scanfile.getName());
-            } else if (file.getName().endsWith(".class")) {
-                String className = scanPath + "." + file.getName().replaceAll(".class", "");
+            } else if (scanfile.getName().endsWith(".class")) {
+                String className = packagePath + "." + scanfile.getName().replaceAll(".class", "");
                 classNames.add(className);
             }
         }
@@ -262,6 +263,13 @@ public class JohnDispatchServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 //        super.doGet(req, resp);
+        doPost(req, resp);
+
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+//        super.doPost(req, resp);
         String requestURI = req.getRequestURI();
 //        Method method = handleMapping.get(requestURI);
 
@@ -284,18 +292,21 @@ public class JohnDispatchServlet extends HttpServlet {
         Map<String, String[]> parameterMap = req.getParameterMap();
 
 
+        boolean doNotHaveRight = false;
         for (Map.Entry<String, String[]> parms : parameterMap.entrySet()) {
+            //name=1&name=2
+            String value = StringUtils.join(parms.getValue(), ",");//1,2
 
-            if(handler.getSecurityIndexMapping().get(parms.getKey())!=null){
 
-                if(handler.getSecurityIndexMapping().get(parms.getKey()).equals(parms.getValue())){
-                    System.out.println("you do not have right,{}");
-                    break;
+
+            if (Objects.nonNull(handler.getSecurityRightName())) {
+                doNotHaveRight = true;
+                if ("userName".equalsIgnoreCase(parms.getKey()) && handler.getSecurityRightName().contains(value)) {
+                    doNotHaveRight =false;
+
                 }
             }
 
-            //name=1&name=2
-            String value = StringUtils.join(parms.getValue(), ",");//1,2
 
             //如果参数和方法中参数匹配上了，填充数据
             if (!handler.getParamIndexMapping().containsKey(parms.getKey())) {
@@ -306,13 +317,20 @@ public class JohnDispatchServlet extends HttpServlet {
             paravalues[integer] = value;
 
         }
+        if(doNotHaveRight){
+            resp.getWriter().println("you do not have the right");
+
+//            throw new RuntimeException();
+        }else {
+            resp.getWriter().println("you have the right");
+        }
+
 
         int reqindex = handler.getParamIndexMapping().get(HttpServletRequest.class.getSimpleName());
         paravalues[reqindex] = req;
+
         int respindex = handler.getParamIndexMapping().get(HttpServletResponse.class.getSimpleName());
-        paravalues[respindex] = req;
-
-
+        paravalues[respindex] = resp;
 
 
         //最终调用的过程
@@ -323,12 +341,6 @@ public class JohnDispatchServlet extends HttpServlet {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
-
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-//        super.doPost(req, resp);
 
     }
 
