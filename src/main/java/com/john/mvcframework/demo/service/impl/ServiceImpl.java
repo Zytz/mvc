@@ -1,7 +1,7 @@
 package com.john.mvcframework.demo.service.impl;
 
 import com.john.mvcframework.annotations.JohnService;
-import com.john.mvcframework.demo.service.Iservice;
+import com.john.mvcframework.demo.service.IService;
 
 /**
  * @author:wenwei
@@ -9,7 +9,7 @@ import com.john.mvcframework.demo.service.Iservice;
  * @description:
  */
 @JohnService
-public class ServiceImpl implements Iservice {
+public class ServiceImpl implements IService {
     @Override
     public String  query(String name) {
         System.out.println("query:name");

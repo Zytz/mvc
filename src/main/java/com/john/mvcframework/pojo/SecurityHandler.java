@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
  * @description:
  */
 
-public class Handler {
+public class SecurityHandler {
     private Object controller;//method.invoke
 
     private Method method;
@@ -19,9 +19,7 @@ public class Handler {
 
     private Map<String,Integer> paramIndexMapping;//参数顺序，string为可以，后面是参数顺序
 
-    private Map<String,String> securityIndexMapping;//参数顺序，string为可以，后面是参数顺序
-
-    public Handler(Object controller, Method method, Pattern pattern) {
+    public SecurityHandler(Object controller, Method method, Pattern pattern) {
         this.controller = controller;
         this.method = method;
         this.pattern = pattern;
@@ -58,13 +56,5 @@ public class Handler {
 
     public void setParamIndexMapping(Map<String, Integer> paramIndexMapping) {
         this.paramIndexMapping = paramIndexMapping;
-    }
-
-    public Map<String, String> getSecurityIndexMapping() {
-        return securityIndexMapping;
-    }
-
-    public void setSecurityIndexMapping(Map<String, String> securityIndexMapping) {
-        this.securityIndexMapping = securityIndexMapping;
     }
 }

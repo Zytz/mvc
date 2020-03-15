@@ -3,6 +3,7 @@ package com.john.mvcframework.servlet;
 import com.john.mvcframework.annotations.JohnAutowired;
 import com.john.mvcframework.annotations.JohnController;
 import com.john.mvcframework.annotations.JohnRequestMapping;
+import com.john.mvcframework.annotations.JohnSercurity;
 import com.john.mvcframework.annotations.JohnService;
 import com.john.mvcframework.pojo.Handler;
 import org.apache.commons.lang3.StringUtils;
@@ -93,6 +94,8 @@ public class JohnDispatchServlet extends HttpServlet {
                     continue;
                 }
 
+
+
                 JohnRequestMapping annotation = method.getAnnotation(JohnRequestMapping.class);
                 String value = annotation.value();
                 baseUrl += value;
@@ -106,6 +109,17 @@ public class JohnDispatchServlet extends HttpServlet {
                         handler.getParamIndexMapping().put(parameters[i].getType().getSimpleName(), i);
                     } else {
                         handler.getParamIndexMapping().put(parameters[i].getName(), i);
+                    }
+                    //处理security的参数
+
+                    //处理security
+                    if(method.isAnnotationPresent(JohnSercurity.class)){
+                        JohnSercurity sucurityAnnotion= method.getAnnotation(JohnSercurity.class);
+                        String name = sucurityAnnotion.value();
+                        if(parameters[i].getName().equals("userName")){
+
+                            handler.getSecurityIndexMapping().put(parameters[i].getName(),name);
+                        }
                     }
                 }
                 handlerList.add(handler);
@@ -251,15 +265,10 @@ public class JohnDispatchServlet extends HttpServlet {
         String requestURI = req.getRequestURI();
 //        Method method = handleMapping.get(requestURI);
 
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-//        super.doPost(req, resp);
 
         Handler handler = getHandleMapping(req);
 
-        if(handler == null){
+        if (handler == null) {
             resp.getWriter().write("404 not found");
             return;
         }
@@ -275,12 +284,21 @@ public class JohnDispatchServlet extends HttpServlet {
         Map<String, String[]> parameterMap = req.getParameterMap();
 
 
-        for(Map.Entry<String, String[]> parms: parameterMap.entrySet()){
+        for (Map.Entry<String, String[]> parms : parameterMap.entrySet()) {
+
+            if(handler.getSecurityIndexMapping().get(parms.getKey())!=null){
+
+                if(handler.getSecurityIndexMapping().get(parms.getKey()).equals(parms.getValue())){
+                    System.out.println("you do not have right,{}");
+                    break;
+                }
+            }
+
             //name=1&name=2
-            String value = StringUtils.join(parms.getValue(),",");//1,2
+            String value = StringUtils.join(parms.getValue(), ",");//1,2
 
             //如果参数和方法中参数匹配上了，填充数据
-            if(!handler.getParamIndexMapping().containsKey(parms.getKey())){
+            if (!handler.getParamIndexMapping().containsKey(parms.getKey())) {
                 continue;
             }
             //方法行残中确实有，找到索引位置；
@@ -296,14 +314,21 @@ public class JohnDispatchServlet extends HttpServlet {
 
 
 
+
         //最终调用的过程
         try {
-            handler.getMethod().invoke(handler.getController(),paravalues);
+            handler.getMethod().invoke(handler.getController(), paravalues);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
+
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+//        super.doPost(req, resp);
 
     }
 
@@ -313,12 +338,12 @@ public class JohnDispatchServlet extends HttpServlet {
         }
 
         String url = req.getRequestURI();
-        for (Handler han:handlerList){
+        for (Handler han : handlerList) {
             Matcher matcher = han.getPattern().matcher(url);
-           if(!matcher.matches()){
-               continue;
-           }
-           return han;
+            if (!matcher.matches()) {
+                continue;
+            }
+            return han;
         }
         return null;
 
